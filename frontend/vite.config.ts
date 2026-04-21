@@ -25,13 +25,17 @@ const backendProxy = {
 export default defineConfig({
   plugins: [react()],
   server: {
+    // 127.0.0.1 / LAN 모두에서 접속 가능 (Windows에서 localhost vs 127 차이 완화)
+    host: true,
     port: 5173,
-    strictPort: true,
+    // 5173 사용 중이면 다음 포트로 뜸 — strictPort true 면 즉시 종료되어 "안 뜨는" 것처럼 보일 수 있음
+    strictPort: false,
     proxy: backendProxy,
   },
   preview: {
+    host: true,
     port: 4173,
-    strictPort: true,
+    strictPort: false,
     proxy: backendProxy,
   },
 })
