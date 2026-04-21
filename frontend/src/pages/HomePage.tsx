@@ -25,16 +25,19 @@ export function HomePage() {
   }, [setPingResult])
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-10">
-      <header className="mb-5">
-        <h1 className="mb-1 text-2xl font-bold tracking-tight text-white">TaxFlow</h1>
-        <p className="text-sm leading-relaxed text-slate-400">
-          Vite + React + TypeScript + Tailwind 프론트입니다. API는 개발 시 Vite 프록시를 통해{' '}
-          <code className="rounded bg-slate-800 px-1 py-0.5 text-xs">8080</code> 백엔드로 전달됩니다.
+    <div className="space-y-6">
+      <div>
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-white">시작하기</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-slate-400">
+          위 메뉴로 <strong className="text-slate-300">세금계산서</strong>·
+          <strong className="text-slate-300">설정</strong> 화면으로 이동할 수 있습니다. 이 페이지는 백엔드 연결을
+          확인하는 <strong className="text-slate-300">개발용 홈</strong>입니다. API는 Vite 프록시로{' '}
+          <code className="rounded bg-slate-800 px-1 py-0.5 text-xs">8080</code> 으로 전달됩니다.
         </p>
-      </header>
+      </div>
 
-      <div className="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-2xl shadow-black/40">
+      <div className="max-w-md rounded-2xl border border-surface-border bg-surface-card p-5 shadow-2xl shadow-black/40">
+        <h2 className="mb-3 text-sm font-semibold text-slate-300">백엔드 연결 테스트</h2>
         <div className="mb-4 flex flex-wrap gap-2">
           <button
             type="button"
