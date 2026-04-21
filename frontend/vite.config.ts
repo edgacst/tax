@@ -27,7 +27,7 @@ const backendProxy = {
  * (정적 파일·API·Vite 내부 경로는 그대로 둠)
  */
 function spaFallback(): Plugin {
-  const skipPrefix = ['/api', '/v3', '/swagger-ui', '/webjars', '/@', '/src', '/node_modules']
+  const skipPrefix = ['/api', '/v3', '/swagger-ui', '/webjars', '/@', '/src', '/node_modules', '/assets']
 
   function shouldSpaFallback(pathname: string): boolean {
     if (!pathname || pathname === '/') {
