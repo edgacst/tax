@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: taxflow-postgres
+    environment:
+      POSTGRES_USER: taxflow
+      POSTGRES_PASSWORD: taxflow_dev_password
+      POSTGRES_DB: taxflow
+    # 호스트 PostgreSQL/Docker와 겹치지 않도록 희귀 포트 사용
+    ports:
+      - "15432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taxflow -d taxflow"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: taxflow-redis
+    ports:
+      - "6379:6379"

@@ -1,6 +1,12 @@
 spring:
+  # 로컬에서 Redis 컨테이너 없이도 기동 가능 (캐시는 인메모리 등 기본값)
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/taxflow
+    url: jdbc:postgresql://127.0.0.1:15432/taxflow
     username: taxflow
     password: taxflow_dev_password
   data:
@@ -13,6 +19,12 @@ spring:
 
 jwt:
   secret: dev-secret-key-for-local-development-only-must-be-at-least-256-bits-long!!
+
+# SMTP 없이 로컬 실행 시 Mail 헬스가 DOWN → 전체 /actuator/health 가 503 이 되지 않도록 끔
+management:
+  health:
+    mail:
+      enabled: false
 
 logging:
   level:
