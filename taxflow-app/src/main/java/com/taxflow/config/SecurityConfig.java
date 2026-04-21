@@ -37,7 +37,8 @@ public class SecurityConfig {
                         "/webjars/**",
                         "/error",
                         "/error/**",
-                        "/api/v1/public/**"
+                        "/api/v1/public/**",
+                        "/api/v1/nts/**"
                 )
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
