@@ -1,11 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight, Radio } from 'lucide-react'
 import { InvoiceStatusBadge } from '../../components/StatusBadge'
 import { fetchPing } from '../../lib/api'
+import { fetchDashboardSummary, type DashboardSummary } from '../../lib/dashboardApi'
 import { won } from '../../lib/format'
-import { mockInvoices } from '../../lib/mock/invoices'
-import { mockPartners } from '../../lib/mock/partners'
 import { useAuthStore } from '../../store/authStore'
 import { useUiStore } from '../../store/uiStore'
 
@@ -13,12 +12,14 @@ export function DashboardPage() {
   const name = useAuthStore((s) => s.user?.name)
   const { lastPingJson, lastHttpStatus, lastError, setPingResult } = useUiStore()
   const [pinging, setPinging] = useState(false)
+  const [summary, setSummary] = useState<DashboardSummary | null>(null)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
 
-  const approvedThisMonth = mockInvoices.filter((i) => i.status === 'approved').length
-  const drafts = mockInvoices.filter((i) => i.status === 'draft').length
-  const salesTotal = mockInvoices
-    .filter((i) => i.direction === 'issue' && i.status === 'approved')
-    .reduce((a, i) => a + i.total, 0)
+  useEffect(() => {
+    void fetchDashboardSummary()
+      .then(setSummary)
+      .catch((e) => setSummaryError(e instanceof Error ? e.message : '요약을 불러오지 못했습니다.'))
+  }, [])
 
   const onPing = useCallback(async () => {
     setPinging(true)
@@ -37,7 +38,7 @@ export function DashboardPage() {
     }
   }, [setPingResult])
 
-  const recent = [...mockInvoices].sort((a, b) => (a.issueDate < b.issueDate ? 1 : -1)).slice(0, 5)
+  const recent = summary?.recentInvoices ?? []
 
   return (
     <div className="space-y-8">
@@ -46,12 +47,30 @@ export function DashboardPage() {
         <p className="mt-1 text-sm text-slate-400">오늘의 발행·승인 현황을 한눈에 확인하세요.</p>
       </div>
 
+      {summaryError && (
+        <div className="rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+          {summaryError}
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: '승인 건수(샘플)', value: String(approvedThisMonth), hint: '목업 데이터' },
-          { label: '임시저장', value: String(drafts), hint: '제출 전' },
-          { label: '승인 매출 합계', value: won(salesTotal), hint: '부가세 포함' },
-          { label: '등록 거래처', value: `${mockPartners.length}곳`, hint: '마스터' },
+          {
+            label: '승인 건수',
+            value: summary ? String(summary.approvedCount) : '—',
+            hint: 'DB 집계',
+          },
+          { label: '임시저장', value: summary ? String(summary.draftCount) : '—', hint: '제출 전' },
+          {
+            label: '승인 매출 합계',
+            value: summary ? won(summary.approvedSalesTotal) : '—',
+            hint: '부가세 포함',
+          },
+          {
+            label: '등록 거래처',
+            value: summary ? `${summary.partnerCount}곳` : '—',
+            hint: '마스터',
+          },
         ].map((c) => (
           <div
             key={c.label}
@@ -87,23 +106,33 @@ export function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-border/80">
-                {recent.map((row) => (
-                  <tr key={row.id} className="text-slate-300">
-                    <td className="py-2.5 pr-3">
-                      <div className="font-medium text-slate-200">{row.issueDate}</div>
-                      <div className="text-xs text-slate-500">{row.serialNo}</div>
-                    </td>
-                    <td className="py-2.5 pr-3">
-                      <Link to={`/invoices/${row.id}`} className="hover:text-blue-300">
-                        {row.partnerName}
-                      </Link>
-                    </td>
-                    <td className="py-2.5 pr-3 text-right tabular-nums text-slate-200">{won(row.total)}</td>
-                    <td className="py-2.5">
-                      <InvoiceStatusBadge status={row.status} />
+                {recent.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-slate-500">
+                      데이터가 없습니다.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  recent.map((row) => (
+                    <tr key={row.id} className="text-slate-300">
+                      <td className="py-2.5 pr-3">
+                        <div className="font-medium text-slate-200">{row.issueDate}</div>
+                        <div className="text-xs text-slate-500">{row.serialNo}</div>
+                      </td>
+                      <td className="py-2.5 pr-3">
+                        <Link to={`/invoices/${row.id}`} className="hover:text-blue-300">
+                          {row.partnerName}
+                        </Link>
+                      </td>
+                      <td className="py-2.5 pr-3 text-right tabular-nums text-slate-200">
+                        {won(row.total)}
+                      </td>
+                      <td className="py-2.5">
+                        <InvoiceStatusBadge status={row.status} />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

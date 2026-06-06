@@ -1,10 +1,12 @@
 import { Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
+import { createInvoiceDraft } from '../../lib/invoicesApi'
+import { listPartners } from '../../lib/partnersApi'
+import { listWorkplaces } from '../../lib/workplacesApi'
 import { won } from '../../lib/format'
-import { mockPartners } from '../../lib/mock/partners'
-import { mockWorkplaces } from '../../lib/mock/workplaces'
+import type { Partner, Workplace } from '../../types/domain'
 
 type Line = { id: string; name: string; qty: number; unitPrice: number }
 
@@ -16,11 +18,26 @@ function newLine(): Line {
 
 export function InvoiceNewPage() {
   const navigate = useNavigate()
-  const [workplaceId, setWorkplaceId] = useState(mockWorkplaces.find((w) => w.default)?.id ?? '')
-  const [partnerId, setPartnerId] = useState(mockPartners[0]?.id ?? '')
+  const [workplaces, setWorkplaces] = useState<Workplace[]>([])
+  const [partners, setPartners] = useState<Partner[]>([])
+  const [workplaceId, setWorkplaceId] = useState('')
+  const [partnerId, setPartnerId] = useState('')
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [remark, setRemark] = useState('')
   const [lines, setLines] = useState<Line[]>([newLine(), newLine()])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    void Promise.all([listWorkplaces(), listPartners()])
+      .then(([w, p]) => {
+        setWorkplaces(w)
+        setPartners(p)
+        setWorkplaceId(w.find((x) => x.default)?.id ?? w[0]?.id ?? '')
+        setPartnerId(p[0]?.id ?? '')
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : '마스터 데이터를 불러오지 못했습니다.'))
+  }, [])
 
   const totals = useMemo(() => {
     const supply = lines.reduce((a, l) => a + l.qty * l.unitPrice, 0)
@@ -32,17 +49,38 @@ export function InvoiceNewPage() {
     setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    window.alert('목업: 국세청 전송·저장 API 연동 후 이 화면과 연결합니다.')
-    navigate('/invoices')
+    const items = lines
+      .filter((l) => l.name.trim() && l.unitPrice > 0)
+      .map((l) => ({ itemName: l.name.trim(), quantity: l.qty, unitPrice: l.unitPrice }))
+    if (items.length === 0) {
+      setError('품목을 1개 이상 입력하세요.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      const created = await createInvoiceDraft({
+        workplaceId: Number(workplaceId),
+        partnerId: Number(partnerId),
+        issueDate,
+        remark,
+        items,
+      })
+      navigate(`/invoices/${created.id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div>
       <PageHeader
         title="세금계산서 발행"
-        description="공급자·공급받는자·품목을 입력합니다. (폼만 구현, 저장은 목업)"
+        description="공급자·공급받는자·품목을 입력합니다."
         actions={
           <Link
             to="/invoices"
@@ -52,6 +90,12 @@ export function InvoiceNewPage() {
           </Link>
         }
       />
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={onSubmit} className="space-y-8">
         <section className="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-lg">
@@ -64,7 +108,7 @@ export function InvoiceNewPage() {
                 onChange={(e) => setWorkplaceId(e.target.value)}
                 className="w-full rounded-xl border border-surface-border bg-slate-900/50 px-3 py-2.5 text-sm text-white"
               >
-                {mockWorkplaces.map((w) => (
+                {workplaces.map((w) => (
                   <option key={w.id} value={w.id}>
                     {w.name} ({w.bizNo})
                   </option>
@@ -78,7 +122,7 @@ export function InvoiceNewPage() {
                 onChange={(e) => setPartnerId(e.target.value)}
                 className="w-full rounded-xl border border-surface-border bg-slate-900/50 px-3 py-2.5 text-sm text-white"
               >
-                {mockPartners.map((p) => (
+                {partners.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} · {p.bizNo}
                   </option>
@@ -201,9 +245,10 @@ export function InvoiceNewPage() {
           </Link>
           <button
             type="submit"
-            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-500"
+            disabled={saving}
+            className="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-500 disabled:opacity-60"
           >
-            임시저장 (목업)
+            {saving ? '저장 중…' : '임시저장'}
           </button>
           <button
             type="button"

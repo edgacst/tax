@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
+import { createPartner } from '../../lib/partnersApi'
 
 export function PartnerNewPage() {
   const navigate = useNavigate()
@@ -9,11 +10,21 @@ export function PartnerNewPage() {
   const [ceo, setCeo] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    window.alert('목업: POST /api/v1/partners 연동 시 저장됩니다.')
-    navigate('/partners')
+    setSaving(true)
+    setError(null)
+    try {
+      await createPartner({ bizNo, name, ceo, email, phone })
+      navigate('/partners')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '저장에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -27,6 +38,12 @@ export function PartnerNewPage() {
           </Link>
         }
       />
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+          {error}
+        </div>
+      )}
 
       <form
         onSubmit={onSubmit}
@@ -88,9 +105,10 @@ export function PartnerNewPage() {
           </Link>
           <button
             type="submit"
-            className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-500"
+            disabled={saving}
+            className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
           >
-            저장 (목업)
+            {saving ? '저장 중…' : '저장'}
           </button>
         </div>
       </form>

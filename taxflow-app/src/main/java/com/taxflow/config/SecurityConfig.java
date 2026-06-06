@@ -38,7 +38,12 @@ public class SecurityConfig {
                         "/error",
                         "/error/**",
                         "/api/v1/public/**",
-                        "/api/v1/nts/**"
+                        "/api/v1/nts/**",
+                        "/api/v1/partners/**",
+                        "/api/v1/workplaces/**",
+                        "/api/v1/invoices/**",
+                        "/api/v1/dashboard/**",
+                        "/api/v1/certificates/**"
                 )
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }

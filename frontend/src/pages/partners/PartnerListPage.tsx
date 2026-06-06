@@ -1,28 +1,38 @@
 import { Plus, Search, Star } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
-import { mockPartners } from '../../lib/mock/partners'
+import { listPartners } from '../../lib/partnersApi'
+import type { Partner } from '../../types/domain'
 
 export function PartnerListPage() {
   const [q, setQ] = useState('')
+  const [rows, setRows] = useState<Partner[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const rows = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return mockPartners
-    return mockPartners.filter(
-      (p) =>
-        p.name.toLowerCase().includes(s) ||
-        p.bizNo.includes(s) ||
-        p.ceo.toLowerCase().includes(s),
-    )
-  }, [q])
+  const load = useCallback(async (search: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      setRows(await listPartners(search || undefined))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '거래처 목록을 불러오지 못했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const t = window.setTimeout(() => void load(q), 200)
+    return () => window.clearTimeout(t)
+  }, [q, load])
 
   return (
     <div>
       <PageHeader
         title="거래처"
-        description="사업자등록번호·연락처를 관리합니다. (목업)"
+        description="사업자등록번호·연락처를 관리합니다."
         actions={
           <Link
             to="/partners/new"
@@ -45,6 +55,12 @@ export function PartnerListPage() {
         />
       </div>
 
+      {error && (
+        <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+          {error}
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-2xl border border-surface-border bg-surface-card shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -59,22 +75,30 @@ export function PartnerListPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-border">
-              {rows.map((p) => (
-                <tr key={p.id} className="text-slate-300 hover:bg-slate-900/30">
-                  <td className="px-4 py-3">
-                    {p.favorite ? (
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    ) : (
-                      <Star className="h-4 w-4 text-slate-600" />
-                    )}
+              {!loading && rows.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                    거래처가 없습니다.
                   </td>
-                  <td className="px-4 py-3 tabular-nums text-slate-200">{p.bizNo}</td>
-                  <td className="px-4 py-3 font-medium text-slate-100">{p.name}</td>
-                  <td className="px-4 py-3">{p.ceo}</td>
-                  <td className="px-4 py-3 text-slate-400">{p.email}</td>
-                  <td className="px-4 py-3 tabular-nums text-slate-400">{p.phone}</td>
                 </tr>
-              ))}
+              ) : (
+                rows.map((p) => (
+                  <tr key={p.id} className="text-slate-300 hover:bg-slate-900/30">
+                    <td className="px-4 py-3">
+                      {p.favorite ? (
+                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                      ) : (
+                        <Star className="h-4 w-4 text-slate-600" />
+                      )}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-slate-200">{p.bizNo}</td>
+                    <td className="px-4 py-3 font-medium text-slate-100">{p.name}</td>
+                    <td className="px-4 py-3">{p.ceo}</td>
+                    <td className="px-4 py-3 text-slate-400">{p.email}</td>
+                    <td className="px-4 py-3 tabular-nums text-slate-400">{p.phone}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

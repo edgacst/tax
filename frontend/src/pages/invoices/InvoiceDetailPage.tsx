@@ -1,15 +1,43 @@
 import { ArrowLeft, FileDown, Send } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { InvoiceStatusBadge } from '../../components/StatusBadge'
 import { won } from '../../lib/format'
-import { getInvoiceById } from '../../lib/mock/invoices'
+import { getInvoice, type InvoiceDetailDto } from '../../lib/invoicesApi'
+import type { InvoiceStatus } from '../../types/domain'
 
 export function InvoiceDetailPage() {
   const { id } = useParams()
-  const row = id ? getInvoiceById(id) : undefined
+  const [row, setRow] = useState<InvoiceDetailDto | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    void getInvoice(id)
+      .then(setRow)
+      .catch((e) => setError(e instanceof Error ? e.message : '상세를 불러오지 못했습니다.'))
+      .finally(() => setLoading(false))
+  }, [id])
+
+  if (!id) {
+    return <Navigate to="/invoices" replace />
+  }
+
+  if (!loading && (error || !row)) {
+    return (
+      <div>
+        <Link to="/invoices" className="text-sm text-blue-400 hover:text-blue-300">
+          목록으로
+        </Link>
+        <p className="mt-6 text-sm text-rose-300">{error ?? '세금계산서를 찾을 수 없습니다.'}</p>
+      </div>
+    )
+  }
 
   if (!row) {
-    return <Navigate to="/invoices" replace />
+    return <p className="text-sm text-slate-500">불러오는 중…</p>
   }
 
   return (
@@ -30,16 +58,16 @@ export function InvoiceDetailPage() {
           <h1 className="text-2xl font-bold text-white">세금계산서 상세</h1>
           <p className="mt-1 text-sm text-slate-400">
             {row.issueDate} · {row.workplaceName} ·{' '}
-            {row.direction === 'issue' ? '매출' : '매입'}
+            {row.direction === 'receive' ? '매입' : '매출'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <InvoiceStatusBadge status={row.status} />
+          <InvoiceStatusBadge status={row.status as InvoiceStatus} />
           <button
             type="button"
             disabled
             className="inline-flex items-center gap-2 rounded-xl border border-surface-border px-4 py-2 text-sm text-slate-500"
-            title="목업"
+            title="추후 구현"
           >
             <FileDown className="h-4 w-4" />
             PDF
@@ -48,7 +76,7 @@ export function InvoiceDetailPage() {
             type="button"
             disabled
             className="inline-flex items-center gap-2 rounded-xl border border-surface-border px-4 py-2 text-sm text-slate-500"
-            title="목업"
+            title="추후 구현"
           >
             <Send className="h-4 w-4" />
             재전송
@@ -88,6 +116,36 @@ export function InvoiceDetailPage() {
           </dl>
         </section>
       </div>
+
+      {row.items.length > 0 && (
+        <section className="mt-6 overflow-hidden rounded-2xl border border-surface-border bg-surface-card">
+          <h2 className="border-b border-surface-border px-6 py-4 text-sm font-semibold text-slate-200">
+            품목
+          </h2>
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-900/40 text-xs text-slate-500">
+              <tr>
+                <th className="px-4 py-2">품명</th>
+                <th className="px-4 py-2 text-right">수량</th>
+                <th className="px-4 py-2 text-right">단가</th>
+                <th className="px-4 py-2 text-right">공급가액</th>
+                <th className="px-4 py-2 text-right">세액</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-border text-slate-300">
+              {row.items.map((item) => (
+                <tr key={item.id}>
+                  <td className="px-4 py-2">{item.itemName}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{item.quantity}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{won(item.unitPrice)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{won(item.amount)}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{won(item.tax)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
       {row.remark && (
         <section className="mt-6 rounded-2xl border border-surface-border bg-surface-card p-6">

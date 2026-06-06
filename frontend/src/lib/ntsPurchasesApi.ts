@@ -1,6 +1,4 @@
-const defaultHeaders: HeadersInit = {
-  Accept: 'application/json',
-}
+import { fetchJson, tenantQs } from './http'
 
 export type NtsSyncRunStatus = 'RUNNING' | 'SUCCESS' | 'FAILED'
 
@@ -35,34 +33,15 @@ export type SyncRunDto = {
   completedAt: string | null
 }
 
-function qs(tenantId?: number) {
-  if (tenantId == null) return ''
-  return `?tenantId=${encodeURIComponent(String(tenantId))}`
-}
-
-async function parseError(res: Response): Promise<Error> {
-  const text = await res.text()
-  return new Error(text || `HTTP ${res.status}`)
-}
-
 /** tenantId 생략 시 백엔드가 `tenant_demo` 테넌트로 해석합니다. */
 export async function syncNtsPurchases(tenantId?: number): Promise<SyncResponseDto> {
-  const res = await fetch(`/api/v1/nts/purchases/sync${qs(tenantId)}`, {
-    method: 'POST',
-    headers: defaultHeaders,
-  })
-  if (!res.ok) throw await parseError(res)
-  return res.json() as Promise<SyncResponseDto>
+  return fetchJson<SyncResponseDto>(`/api/v1/nts/purchases/sync${tenantQs(tenantId)}`, { method: 'POST' })
 }
 
 export async function listNtsPurchaseReceipts(tenantId?: number): Promise<PurchaseReceiptDto[]> {
-  const res = await fetch(`/api/v1/nts/purchases${qs(tenantId)}`, { headers: defaultHeaders })
-  if (!res.ok) throw await parseError(res)
-  return res.json() as Promise<PurchaseReceiptDto[]>
+  return fetchJson<PurchaseReceiptDto[]>(`/api/v1/nts/purchases${tenantQs(tenantId)}`)
 }
 
 export async function listNtsPurchaseSyncRuns(tenantId?: number): Promise<SyncRunDto[]> {
-  const res = await fetch(`/api/v1/nts/purchases/sync/runs${qs(tenantId)}`, { headers: defaultHeaders })
-  if (!res.ok) throw await parseError(res)
-  return res.json() as Promise<SyncRunDto[]>
+  return fetchJson<SyncRunDto[]>(`/api/v1/nts/purchases/sync/runs${tenantQs(tenantId)}`)
 }

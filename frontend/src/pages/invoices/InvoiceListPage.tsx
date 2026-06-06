@@ -1,10 +1,11 @@
 import { CloudDownload, Plus, RefreshCw, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { InvoiceStatusBadge } from '../../components/StatusBadge'
 import { PageHeader } from '../../components/PageHeader'
 import { won } from '../../lib/format'
-import { mockInvoices } from '../../lib/mock/invoices'
+import { listInvoices } from '../../lib/invoicesApi'
+import type { Invoice } from '../../types/domain'
 import {
   listNtsPurchaseReceipts,
   listNtsPurchaseSyncRuns,
@@ -30,6 +31,10 @@ export function InvoiceListPage() {
   const [q, setQ] = useState('')
   const [tab, setTab] = useState<InvoiceTab>('issued')
 
+  const [issuedRows, setIssuedRows] = useState<Invoice[]>([])
+  const [issuedLoading, setIssuedLoading] = useState(false)
+  const [issuedError, setIssuedError] = useState<string | null>(null)
+
   const [ntsReceipts, setNtsReceipts] = useState<PurchaseReceiptDto[]>([])
   const [ntsRuns, setNtsRuns] = useState<SyncRunDto[]>([])
   const [ntsLoading, setNtsLoading] = useState(false)
@@ -54,6 +59,24 @@ export function InvoiceListPage() {
     }
   }, [])
 
+  const loadIssued = useCallback(async (search: string) => {
+    setIssuedLoading(true)
+    setIssuedError(null)
+    try {
+      setIssuedRows(await listInvoices(search || undefined))
+    } catch (e) {
+      setIssuedError(e instanceof Error ? e.message : '세금계산서 목록을 불러오지 못했습니다.')
+    } finally {
+      setIssuedLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (tab !== 'issued') return
+    const t = window.setTimeout(() => void loadIssued(q), 200)
+    return () => window.clearTimeout(t)
+  }, [tab, q, loadIssued])
+
   useEffect(() => {
     if (tab !== 'nts') return
     void loadNts()
@@ -76,24 +99,13 @@ export function InvoiceListPage() {
     }
   }
 
-  const rows = useMemo(() => {
-    const s = q.trim().toLowerCase()
-    if (!s) return mockInvoices
-    return mockInvoices.filter(
-      (i) =>
-        i.partnerName.toLowerCase().includes(s) ||
-        i.serialNo.toLowerCase().includes(s) ||
-        i.partnerBizNo.includes(s),
-    )
-  }, [q])
-
   return (
     <div>
       <PageHeader
         title="세금계산서"
         description={
           tab === 'issued'
-            ? '매출·매입 발행 내역을 조회합니다. (사내 목업)'
+            ? '매출·매입 발행 내역을 조회합니다.'
             : '홈택스 매입분을 수신·동기화합니다. (백엔드 스텁/DB 연동)'
         }
         actions={
@@ -134,6 +146,11 @@ export function InvoiceListPage() {
 
       {tab === 'issued' ? (
         <>
+          {issuedError && (
+            <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-sm text-rose-200">
+              {issuedError}
+            </div>
+          )}
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative max-w-md flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
@@ -146,7 +163,8 @@ export function InvoiceListPage() {
               />
             </div>
             <p className="text-xs text-slate-500">
-              총 <span className="font-medium text-slate-300">{rows.length}</span>건
+              총 <span className="font-medium text-slate-300">{issuedRows.length}</span>건
+              {issuedLoading && <span className="ml-2 text-slate-600">불러오는 중…</span>}
             </p>
           </div>
 
@@ -165,7 +183,7 @@ export function InvoiceListPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-border">
-                  {rows.map((row) => (
+                  {issuedRows.map((row) => (
                     <tr key={row.id} className="text-slate-300 hover:bg-slate-900/30">
                       <td className="px-4 py-3">
                         <span
