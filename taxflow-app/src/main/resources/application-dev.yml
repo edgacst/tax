@@ -31,3 +31,11 @@ logging:
     com.taxflow: DEBUG
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
+
+# 공공데이터포털 인증키 — 채팅/깃에 올리지 말고 환경 변수로만 주입
+# PowerShell: $env:NTS_BIZ_VERIFY_SERVICE_KEY="발급키"; $env:NTS_BIZ_VERIFY_ENABLED="true"
+taxflow:
+  nts:
+    biz-verify:
+      enabled: ${NTS_BIZ_VERIFY_ENABLED:false}
+      service-key: ${NTS_BIZ_VERIFY_SERVICE_KEY:}

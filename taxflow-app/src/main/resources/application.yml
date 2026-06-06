@@ -81,6 +81,13 @@ totp:
 audit:
   retention-days: 365
 
+taxflow:
+  nts:
+    biz-verify:
+      enabled: ${NTS_BIZ_VERIFY_ENABLED:false}
+      service-key: ${NTS_BIZ_VERIFY_SERVICE_KEY:}
+      base-url: https://api.odcloud.kr/api/nts-businessman/v1
+
 management:
   endpoints:
     web:

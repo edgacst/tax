@@ -6,6 +6,7 @@ import {
   Menu,
   Settings,
   Shield,
+  ShieldCheck,
   Users,
   X,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ const nav = [
   { to: '/partners', label: '거래처', icon: Users, end: false },
   { to: '/workplaces', label: '사업장', icon: Building2, end: false },
   { to: '/certificates', label: '공인인증서', icon: Shield, end: false },
+  { to: '/tools/biz-verify', label: '사업자 조회', icon: ShieldCheck, end: false },
   { to: '/settings', label: '설정', icon: Settings, end: false },
 ] as const
 
