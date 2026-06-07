@@ -1,14 +1,15 @@
-# TaxFlow 로컬 한 번에 실행 (Windows)
-# 사용법:  .\scripts\start-dev.ps1
-# 사전: Docker Desktop 실행, Node.js 설치, .env 파일에 인증키 설정
+# TaxFlow local dev (Windows)
+# Usage:  cd C:\Users\USER\Desktop\tax
+#         .\scripts\start-dev.ps1
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
 function Load-DotEnv([string]$path) {
     if (-not (Test-Path $path)) { return }
-    Get-Content $path | ForEach-Object {
+    Get-Content $path -Encoding UTF8 | ForEach-Object {
         $line = $_.Trim()
         if ($line -eq "" -or $line.StartsWith("#")) { return }
         $eq = $line.IndexOf("=")
@@ -19,36 +20,67 @@ function Load-DotEnv([string]$path) {
     }
 }
 
+function Test-PortListening([int]$port) {
+    return [bool](Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
+}
+
 if (-not (Test-Path "$root\.env")) {
     Write-Host ""
-    Write-Host "  [1회만] copy .env.example .env  후 .env 에 공공데이터포털 인증키를 넣으세요." -ForegroundColor Yellow
+    Write-Host "[Setup] copy .env.example .env  and set NTS_BIZ_VERIFY_SERVICE_KEY" -ForegroundColor Yellow
     Write-Host ""
 }
 
 Load-DotEnv "$root\.env"
 
-Write-Host "Postgres 시작..." -ForegroundColor Cyan
-docker compose up -d postgres
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Docker가 꺼져 있거나 docker compose 실패. Docker Desktop을 켜고 다시 실행하세요." -ForegroundColor Red
-    exit 1
+$dbPort = if ($env:DB_PORT) { [int]$env:DB_PORT } else { 15432 }
+$dbUp = (Test-PortListening $dbPort) -or (Test-PortListening 5432)
+if ($dbUp) {
+    Write-Host "[OK] Postgres port open ($dbPort or 5432)" -ForegroundColor Green
+    & "$root\scripts\test-db.ps1" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[WARN] Port open but taxflow DB not ready. Run: .\scripts\init-db.ps1" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "[...] Starting Postgres (docker compose)..." -ForegroundColor Cyan
+    $dockerOut = docker compose up -d postgres 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "[WARN] Docker failed. DB is not running." -ForegroundColor Red
+        Write-Host "  1) Open Docker Desktop and wait until it is fully started (green)" -ForegroundColor Yellow
+        Write-Host "  2) If still fails: Docker Desktop -> Troubleshoot -> Restart" -ForegroundColor Yellow
+        Write-Host "  3) Then run this script again" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Backend will still start but may fail without DB." -ForegroundColor Yellow
+        if ($dockerOut) { Write-Host $dockerOut -ForegroundColor DarkGray }
+    } else {
+        Write-Host "[OK] Postgres container started" -ForegroundColor Green
+        Start-Sleep -Seconds 3
+    }
 }
 
-Write-Host "백엔드(8080) 새 창..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList @(
-    "-NoExit", "-Command",
-    "Set-Location '$root'; if (Test-Path '.env') { Get-Content '.env' | ForEach-Object { if (`$_ -match '^\s*#' -or `$_ -notmatch '=') { return }; `$i=`$_ IndexOf('='); Set-Item Env:`$(`$_.Substring(0,`$i).Trim()) `$_.Substring(`$i+1).Trim() } }; .\gradlew.bat :taxflow-app:bootRun --args='--spring.profiles.active=dev'"
-)
+Write-Host "[...] Backend (8080) in new window..." -ForegroundColor Cyan
+$backendCmd = @"
+Set-Location '$root'
+if (Test-Path '.env') {
+  Get-Content '.env' -Encoding UTF8 | ForEach-Object {
+    if (`$_ -match '^\s*#' -or `$_ -notmatch '=') { return }
+    `$i = `$_ IndexOf('=')
+    Set-Item Env:`$(`$_.Substring(0,`$i).Trim()) `$_.Substring(`$i+1).Trim()
+  }
+}
+.\gradlew.bat :taxflow-app:bootRun --args='--spring.profiles.active=dev'
+"@
+Start-Process powershell -ArgumentList @("-NoExit", "-Command", $backendCmd)
 
 Start-Sleep -Seconds 2
-Write-Host "프론트(5173) 새 창..." -ForegroundColor Cyan
+Write-Host "[...] Frontend (5173) in new window..." -ForegroundColor Cyan
 Start-Process powershell -ArgumentList @("-NoExit", "-Command", "Set-Location '$root\frontend'; npm run dev")
 
 Start-Sleep -Seconds 3
 Start-Process "http://127.0.0.1:5173/tools/biz-verify"
 
 Write-Host ""
-Write-Host "  브라우저를 열었습니다." -ForegroundColor Green
-Write-Host "  백엔드 창에 'Started TaxFlowApplication' 이 보일 때까지 30초~1분 기다린 뒤 조회하세요." -ForegroundColor Green
-Write-Host "  502 나오면 = 아직 백엔드 기동 중. 잠시 후 새로고침." -ForegroundColor Yellow
+Write-Host "[Done] Browser opened." -ForegroundColor Green
+Write-Host "  Wait for 'Started TaxFlowApplication' in the backend window, then refresh." -ForegroundColor Green
+Write-Host "  502 = backend still starting." -ForegroundColor Yellow
 Write-Host ""
