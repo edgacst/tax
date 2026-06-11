@@ -29,6 +29,7 @@ public class TenantCertificateResolver {
                             SELECT id, vault_path, valid_to, status
                             FROM public.certificates
                             WHERE tenant_id = ? AND status = 'ACTIVE'
+                              AND vault_path LIKE 'local://%'
                             ORDER BY valid_to DESC
                             LIMIT 1
                             """,
@@ -37,7 +38,7 @@ public class TenantCertificateResolver {
         } catch (EmptyResultDataAccessException e) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "활성 공인인증서가 없습니다. 인증서를 먼저 등록하세요."
+                    "사용 가능한 공인인증서가 없습니다. 공인인증서 탭에서 .p12/.pfx 파일을 업로드하세요. (화면에만 보이는 데모 인증서는 실제 파일이 없습니다)"
             );
         }
 
