@@ -1,5 +1,6 @@
 package com.taxflow.nts.purchase;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 @Component
 @Primary
+@ConditionalOnProperty(name = "taxflow.nts.purchase.mode", havingValue = "stub", matchIfMissing = true)
 public class StubHometaxPurchaseInquiryPort implements HometaxPurchaseInquiryPort {
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");

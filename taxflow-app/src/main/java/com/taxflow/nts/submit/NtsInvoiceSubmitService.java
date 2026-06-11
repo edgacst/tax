@@ -3,9 +3,11 @@ package com.taxflow.nts.submit;
 import com.taxflow.audit.AuditLog;
 import com.taxflow.audit.AuditService;
 import com.taxflow.certificate.TenantCertificateResolver;
+import com.taxflow.invoice.InvoiceService;
 import com.taxflow.invoice.api.InvoiceDetailDto;
 import com.taxflow.invoice.api.InvoiceItemDto;
 import com.taxflow.invoice.api.InvoiceSubmitResponseDto;
+import com.taxflow.invoice.api.SubmissionLogDto;
 import com.taxflow.tenant.Tenant;
 import com.taxflow.tenant.TenantAccess;
 import lombok.RequiredArgsConstructor;
@@ -211,6 +213,7 @@ public class NtsInvoiceSubmitService {
         );
 
         Timestamp submitted = (Timestamp) head.get("submitted_at");
+        List<SubmissionLogDto> submissionLogs = InvoiceService.loadSubmissionLogs(tenantAccess, schema, invoiceId);
         return new InvoiceDetailDto(
                 ((Number) head.get("id")).longValue(),
                 (String) head.get("serial_number"),
@@ -226,6 +229,7 @@ public class NtsInvoiceSubmitService {
                 (String) head.get("remark"),
                 (String) head.get("approval_number"),
                 submitted != null ? submitted.toInstant().toString() : null,
+                submissionLogs,
                 items
         );
     }

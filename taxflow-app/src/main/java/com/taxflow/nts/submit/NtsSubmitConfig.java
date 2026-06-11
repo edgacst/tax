@@ -1,12 +1,13 @@
 package com.taxflow.nts.submit;
 
+import com.taxflow.nts.purchase.NtsPurchaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties(NtsSubmissionProperties.class)
+@EnableConfigurationProperties({NtsSubmissionProperties.class, NtsPurchaseProperties.class})
 public class NtsSubmitConfig {
 
     @Bean

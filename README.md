@@ -19,7 +19,7 @@
 |------|------|------|
 | **Phase 1** | JWT 인증, 테넌트 격리, 공인인증서 Vault, 감사 로그 | ✅ 완료 |
 | **Phase 2** | 세금계산서 CRUD, XML 생성, XMLDSig 서명, 국세청 전송(stub) | ✅ 완료 |
-| **Phase 3** | 국세청 SOAP 실연동, 매출·매입 동기화, 재전송·오류 처리 | 🚧 진행 예정 |
+| **Phase 3** | 국세청 SOAP 실연동, 매출·매입 동기화, 재전송·오류 처리 | 🚧 진행 중 |
 | **Phase 4** | PDF·이메일·엑셀, ERP 연동 API | 📋 예정 |
 | **Phase 5** | 테넌트 가입, RBAC, 사용량·요금제 | 📋 예정 |
 | **Phase 6** | CI/CD, 2FA, 보안 검증, 운영 가이드 | 📋 예정 |
@@ -70,7 +70,22 @@ copy .env.example .env
 
 백엔드만 재시작: `.\scripts\restart-backend.ps1`
 
-### 4. 로그인 (dev 프로필)
+### 4. SOAP 모드 테스트 (dev 목 서버)
+
+`.env`에 아래를 추가하면 stub 대신 로컬 SOAP 목 엔드포인트를 사용합니다.
+
+```env
+NTS_SUBMISSION_MODE=soap
+NTS_SUBMISSION_SOAP_ENDPOINT=http://127.0.0.1:8080/api/v1/dev/nts/mock/submit
+NTS_PURCHASE_MODE=soap
+NTS_PURCHASE_SOAP_ENDPOINT=http://127.0.0.1:8080/api/v1/dev/nts/mock/purchases
+```
+
+백엔드 재시작 후 세금계산서 **국세청 발행** → 목 승인번호 수신. 매입은 `/api/v1/nts/purchases/sync` 호출.
+
+실제 국세청 테스트베드 URL·SOAP Action은 운영 환경 변수로 교체합니다.
+
+### 5. 로그인 (dev 프로필)
 
 | 항목 | 값 |
 |------|-----|
@@ -125,6 +140,8 @@ tax/
 | `NTS_BIZ_VERIFY_SERVICE_KEY` | 공공데이터포털 인증키 |
 | `NTS_SUBMISSION_MODE` | `stub`(기본) 또는 `soap` |
 | `NTS_SUBMISSION_SOAP_ENDPOINT` | 국세청 SOAP 엔드포인트 (soap 모드) |
+| `NTS_PURCHASE_MODE` | 매입 동기화 `stub` / `soap` |
+| `NTS_PURCHASE_SOAP_ENDPOINT` | 매입 조회 SOAP 엔드포인트 |
 
 `.env`와 `data/certificate-vault/`는 Git에 올리지 않습니다.
 

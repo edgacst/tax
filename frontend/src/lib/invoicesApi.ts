@@ -29,7 +29,19 @@ export type InvoiceItemDto = {
   tax: number
 }
 
-export type InvoiceDetailDto = InvoiceDto & { items: InvoiceItemDto[] }
+export type SubmissionLogDto = {
+  id: number
+  responseCode: string
+  responseMessage?: string | null
+  approvalNumber?: string | null
+  submittedAt: string
+  success: boolean
+}
+
+export type InvoiceDetailDto = InvoiceDto & {
+  submissionLogs?: SubmissionLogDto[]
+  items: InvoiceItemDto[]
+}
 
 function toInvoice(d: InvoiceDto): Invoice {
   return {

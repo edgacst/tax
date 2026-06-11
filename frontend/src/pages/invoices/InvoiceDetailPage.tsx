@@ -51,8 +51,10 @@ export function InvoiceDetailPage() {
     try {
       const res = await submitInvoice(id)
       setRow(res.invoice)
+      setSubmitError(null)
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : '국세청 전송에 실패했습니다.')
+      void getInvoice(id).then(setRow)
     } finally {
       setSubmitting(false)
     }
@@ -98,11 +100,35 @@ export function InvoiceDetailPage() {
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
-              {submitting ? '전송 중…' : '국세청 발행'}
+              {submitting ? '전송 중…' : row.submissionLogs?.length ? '재전송' : '국세청 발행'}
             </button>
           )}
         </div>
       </div>
+
+      {row.submissionLogs && row.submissionLogs.length > 0 && (
+        <section className="mt-6 overflow-hidden rounded-2xl border border-surface-border bg-surface-card">
+          <h2 className="border-b border-surface-border px-6 py-4 text-sm font-semibold text-slate-200">
+            국세청 전송 이력
+          </h2>
+          <ul className="divide-y divide-surface-border text-sm">
+            {row.submissionLogs.map((log) => (
+              <li key={log.id} className="flex flex-wrap items-start justify-between gap-2 px-6 py-3">
+                <div>
+                  <p className={log.success ? 'text-emerald-300' : 'text-rose-300'}>
+                    {log.responseCode}
+                    {log.responseMessage ? ` — ${log.responseMessage}` : ''}
+                  </p>
+                  {log.approvalNumber && (
+                    <p className="mt-1 font-mono text-xs text-slate-400">{log.approvalNumber}</p>
+                  )}
+                </div>
+                <time className="text-xs text-slate-500">{log.submittedAt}</time>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {submitError && (
         <p className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">

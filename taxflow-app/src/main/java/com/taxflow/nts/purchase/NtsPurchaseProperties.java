@@ -1,4 +1,4 @@
-package com.taxflow.nts.submit;
+package com.taxflow.nts.purchase;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,30 +6,23 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "taxflow.nts.submission")
-public class NtsSubmissionProperties {
+@ConfigurationProperties(prefix = "taxflow.nts.purchase")
+public class NtsPurchaseProperties {
 
-    /**
-     * stub: 로컬·개발 (가상 승인번호) / soap: 국세청 SOAP 엔드포인트 전송
-     */
     private Mode mode = Mode.stub;
 
     private String soapEndpoint = "";
 
-    /** SOAP Action 헤더 (비우면 생략) */
     private String soapAction = "";
 
     private String soapNamespace = "http://www.nts.go.kr/standard/ti/v1";
 
-    private String soapOperation = "SubmitTaxInvoiceRequest";
-
-    private boolean soapUseCdata = true;
+    private String soapListOperation = "ListPurchaseTaxInvoicesRequest";
 
     private int connectTimeoutMs = 10_000;
 
     private int readTimeoutMs = 60_000;
 
-    /** 실패 시 추가 재시도 횟수 (0 = 1회만) */
     private int maxRetries = 2;
 
     private long retryDelayMs = 1_000;

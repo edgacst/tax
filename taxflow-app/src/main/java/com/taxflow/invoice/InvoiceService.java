@@ -128,11 +128,13 @@ public class InvoiceService {
             submittedAt = ts != null ? ts.toInstant().toString() : null;
         }
 
+        List<SubmissionLogDto> submissionLogs = loadSubmissionLogs(schema, invoiceId);
+
         return new InvoiceDetailDto(
                 head.id(), head.serialNo(), head.issueDate(), head.workplaceName(),
                 head.partnerName(), head.partnerBizNo(), head.supplyAmount(), head.tax(),
                 head.total(), head.status(), head.direction(), head.remark(),
-                approvalNumber, submittedAt, items
+                approvalNumber, submittedAt, submissionLogs, items
         );
     }
 
@@ -197,6 +199,34 @@ public class InvoiceService {
         }
         auditService.log(AuditLog.INVOICE_CREATED, "invoice", invoiceId);
         return getById(null, invoiceId);
+    }
+
+    public static List<SubmissionLogDto> loadSubmissionLogs(com.taxflow.tenant.TenantAccess tenantAccess, String schema, Long invoiceId) {
+        return tenantAccess.jdbc().query(
+                """
+                        SELECT id, response_code, response_message, approval_number, submitted_at
+                        FROM %s.submission_logs
+                        WHERE invoice_id = ?
+                        ORDER BY submitted_at DESC
+                        LIMIT 10
+                        """.formatted(schema),
+                (rs, rowNum) -> {
+                    String code = rs.getString("response_code");
+                    return new SubmissionLogDto(
+                            rs.getLong("id"),
+                            code,
+                            rs.getString("response_message"),
+                            rs.getString("approval_number"),
+                            rs.getTimestamp("submitted_at").toInstant().toString(),
+                            "0000".equals(code) || "OK".equalsIgnoreCase(code)
+                    );
+                },
+                invoiceId
+        );
+    }
+
+    private List<SubmissionLogDto> loadSubmissionLogs(String schema, Long invoiceId) {
+        return loadSubmissionLogs(tenantAccess, schema, invoiceId);
     }
 
     private void assertExists(String schema, String table, Long id) {

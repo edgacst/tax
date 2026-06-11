@@ -93,6 +93,15 @@ taxflow:
     submission:
       mode: ${NTS_SUBMISSION_MODE:stub}
       soap-endpoint: ${NTS_SUBMISSION_SOAP_ENDPOINT:}
+      soap-namespace: http://www.nts.go.kr/standard/ti/v1
+      soap-operation: SubmitTaxInvoiceRequest
+      connect-timeout-ms: 10000
+      read-timeout-ms: 60000
+      max-retries: 2
+    purchase:
+      mode: ${NTS_PURCHASE_MODE:stub}
+      soap-endpoint: ${NTS_PURCHASE_SOAP_ENDPOINT:}
+      soap-list-operation: ListPurchaseTaxInvoicesRequest
 
 management:
   endpoints:

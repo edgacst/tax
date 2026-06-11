@@ -50,4 +50,10 @@ taxflow:
       service-key: ${NTS_BIZ_VERIFY_SERVICE_KEY:}
     submission:
       mode: ${NTS_SUBMISSION_MODE:stub}
+      # SOAP 테스트: http://127.0.0.1:8080/api/v1/dev/nts/mock/submit
       soap-endpoint: ${NTS_SUBMISSION_SOAP_ENDPOINT:}
+      max-retries: 2
+    purchase:
+      mode: ${NTS_PURCHASE_MODE:stub}
+      # SOAP 테스트: http://127.0.0.1:8080/api/v1/dev/nts/mock/purchases
+      soap-endpoint: ${NTS_PURCHASE_SOAP_ENDPOINT:}
