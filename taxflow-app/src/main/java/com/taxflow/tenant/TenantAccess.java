@@ -1,5 +1,7 @@
 package com.taxflow.tenant;
 
+import com.taxflow.security.AuthenticatedUser;
+import com.taxflow.security.SecurityContextHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,16 +19,32 @@ public class TenantAccess {
     private final TenantRepository tenantRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    public Tenant resolve(Long tenantIdOrNull) {
-        if (tenantIdOrNull != null) {
-            return tenantRepository.findById(tenantIdOrNull)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "tenant not found"));
+    /**
+     * JWT에 담긴 tenantId로 테넌트를 조회합니다. SUPER_ADMIN만 tenantId 파라미터로 다른 테넌트 접근 가능.
+     */
+    public Tenant requireTenant(Long tenantIdOverride) {
+        AuthenticatedUser user = SecurityContextHelper.requireUser();
+        Long tenantId = user.getTenantId();
+        if (tenantIdOverride != null) {
+            if (!tenantIdOverride.equals(tenantId) && !"SUPER_ADMIN".equals(user.getRole())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "다른 테넌트 데이터에 접근할 수 없습니다.");
+            }
+            tenantId = tenantIdOverride;
         }
-        return tenantRepository.findBySchemaName("tenant_demo")
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "tenantId 파라미터를 주거나, tenant_demo 시드가 필요합니다."
-                ));
+        if (tenantId == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "테넌트가 할당되지 않은 사용자입니다.");
+        }
+        return tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "tenant not found"));
+    }
+
+    public Tenant requireTenant() {
+        return requireTenant(null);
+    }
+
+    @Deprecated
+    public Tenant resolve(Long tenantIdOrNull) {
+        return requireTenant(tenantIdOrNull);
     }
 
     public String schemaName(Tenant tenant) {

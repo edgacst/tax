@@ -19,19 +19,13 @@ public class PartnerController {
 
     @GetMapping
     @Operation(summary = "거래처 목록")
-    public List<PartnerDto> list(
-            @RequestParam(name = "tenantId", required = false) Long tenantId,
-            @RequestParam(name = "q", required = false) String q
-    ) {
-        return partnerService.list(tenantId, q);
+    public List<PartnerDto> list(@RequestParam(name = "q", required = false) String q) {
+        return partnerService.list(null, q);
     }
 
     @PostMapping
     @Operation(summary = "거래처 등록")
-    public PartnerDto create(
-            @RequestParam(name = "tenantId", required = false) Long tenantId,
-            @Valid @RequestBody CreatePartnerRequest body
-    ) {
-        return partnerService.create(tenantId, body);
+    public PartnerDto create(@Valid @RequestBody CreatePartnerRequest body) {
+        return partnerService.create(null, body);
     }
 }

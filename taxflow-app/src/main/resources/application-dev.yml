@@ -27,6 +27,10 @@ management:
     mail:
       enabled: false
 
+server:
+  error:
+    include-message: always
+
 logging:
   level:
     com.taxflow: DEBUG
@@ -36,6 +40,10 @@ logging:
 # 공공데이터포털 인증키 — 채팅/깃에 올리지 말고 환경 변수로만 주입
 # PowerShell: $env:NTS_BIZ_VERIFY_SERVICE_KEY="발급키"; $env:NTS_BIZ_VERIFY_ENABLED="true"
 taxflow:
+  certificate:
+    # 32-byte dev-only key (Base64). 운영: TAXFLOW_CERT_MASTER_KEY 환경 변수로 교체
+    master-key-base64: ${TAXFLOW_CERT_MASTER_KEY:dGF4Zmxvdy1kZXYtY2VydC12YXVsdC1rZXktMzIhIQ==}
+    local-storage-dir: data/certificate-vault
   nts:
     biz-verify:
       enabled: ${NTS_BIZ_VERIFY_ENABLED:false}

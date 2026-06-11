@@ -69,6 +69,8 @@ public class AuditLog {
     public static final String USER_DELETED = "USER_DELETED";
     public static final String USER_ROLE_CHANGED = "USER_ROLE_CHANGED";
 
+    public static final String PARTNER_CREATED = "PARTNER_CREATED";
+
     public static final String INVOICE_CREATED = "INVOICE_CREATED";
     public static final String INVOICE_UPDATED = "INVOICE_UPDATED";
     public static final String INVOICE_SUBMITTED = "INVOICE_SUBMITTED";

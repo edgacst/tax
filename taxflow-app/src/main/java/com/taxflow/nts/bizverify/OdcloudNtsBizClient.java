@@ -30,10 +30,10 @@ public class OdcloudNtsBizClient {
     }
 
     private JsonNode post(String path, Object body) {
+        // 공공데이터포털 인증키는 보통 이미 percent-encoded — 재인코딩 시 키가 깨짐
         URI uri = UriComponentsBuilder.fromUriString(properties.getBaseUrl() + path)
                 .queryParam("serviceKey", properties.getServiceKey())
-                .encode()
-                .build()
+                .build(true)
                 .toUri();
 
         try {

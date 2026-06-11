@@ -1,5 +1,6 @@
-import { Building2, Star } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Building2, Pencil, Plus, Star } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '../../components/PageHeader'
 import { listWorkplaces } from '../../lib/workplacesApi'
 import type { Workplace } from '../../types/domain'
@@ -8,11 +9,18 @@ export function WorkplaceListPage() {
   const [rows, setRows] = useState<Workplace[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    void listWorkplaces()
-      .then(setRows)
-      .catch((e) => setError(e instanceof Error ? e.message : '사업장 목록을 불러오지 못했습니다.'))
+  const load = useCallback(async () => {
+    setError(null)
+    try {
+      setRows(await listWorkplaces())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '사업장 목록을 불러오지 못했습니다.')
+    }
   }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   return (
     <div>
@@ -20,14 +28,13 @@ export function WorkplaceListPage() {
         title="사업장"
         description="다중 사업장·기본 사업장을 관리합니다."
         actions={
-          <button
-            type="button"
-            disabled
-            className="rounded-xl border border-surface-border px-4 py-2.5 text-sm font-medium text-slate-500"
-            title="추후 구현"
+          <Link
+            to="/workplaces/new"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
           >
+            <Plus className="h-4 w-4" />
             사업장 추가
-          </button>
+          </Link>
         }
       />
 
@@ -53,14 +60,24 @@ export function WorkplaceListPage() {
                   <p className="text-xs text-slate-500">{w.bizNo}</p>
                 </div>
               </div>
-              {w.default && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-amber-900/40 px-2 py-1 text-xs font-medium text-amber-200">
-                  <Star className="h-3 w-3 fill-current" />
-                  기본
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {w.default && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-900/40 px-2 py-1 text-xs font-medium text-amber-200">
+                    <Star className="h-3 w-3 fill-current" />
+                    기본
+                  </span>
+                )}
+                <Link
+                  to={`/workplaces/${w.id}/edit`}
+                  className="inline-flex items-center gap-1 rounded-lg border border-surface-border px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  수정
+                </Link>
+              </div>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-slate-400">{w.address}</p>
+            {w.ceoName && <p className="mt-3 text-sm text-slate-400">대표: {w.ceoName}</p>}
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">{w.address || '주소 미입력'}</p>
           </div>
         ))}
       </div>

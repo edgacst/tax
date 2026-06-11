@@ -20,7 +20,7 @@ if (-not (Load-DotEnv "$root\.env")) {
     exit 1
 }
 
-$host = if ($env:DB_HOST) { $env:DB_HOST } else { "127.0.0.1" }
+$dbHost = if ($env:DB_HOST) { $env:DB_HOST } else { "127.0.0.1" }
 $port = if ($env:DB_PORT) { $env:DB_PORT } else { "5432" }
 $db = if ($env:DB_NAME) { $env:DB_NAME } else { "taxflow" }
 $user = if ($env:DB_USERNAME) { $env:DB_USERNAME } else { "taxflow" }
@@ -37,15 +37,15 @@ if (-not $psql) {
 }
 
 $env:PGPASSWORD = $pass
-$result = & $psql -U $user -h $host -p $port -d $db -c "SELECT 1 AS ok" -t 2>&1
+$result = & $psql -U $user -h $dbHost -p $port -d $db -c "SELECT 1 AS ok" -t 2>&1
 Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
 
 if ($LASTEXITCODE -eq 0 -and ($result -match "1")) {
-    Write-Host "[OK] DB connection: $user@$host`:$port/$db" -ForegroundColor Green
+    Write-Host "[OK] DB connection: $user@${dbHost}:$port/$db" -ForegroundColor Green
     exit 0
 }
 
-Write-Host "[FAIL] DB connection failed: $user@$host`:$port/$db" -ForegroundColor Red
+Write-Host "[FAIL] DB connection failed: $user@${dbHost}:$port/$db" -ForegroundColor Red
 Write-Host $result
 Write-Host "Run:  .\scripts\init-db.ps1" -ForegroundColor Yellow
 exit 1

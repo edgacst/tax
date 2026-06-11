@@ -5,6 +5,11 @@ public record WorkplaceDto(
         String name,
         String bizNo,
         boolean isDefault,
-        String address
+        String address,
+        String ceoName,
+        String bizType,
+        String bizItem,
+        String phone,
+        String email
 ) {
 }

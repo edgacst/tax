@@ -31,6 +31,11 @@ export interface Workplace {
   bizNo: string
   default: boolean
   address: string
+  ceoName: string
+  bizType: string
+  bizItem: string
+  phone: string
+  email: string
 }
 
 export interface CertificateMeta {

@@ -19,28 +19,19 @@ public class InvoiceController {
 
     @GetMapping
     @Operation(summary = "세금계산서 목록")
-    public List<InvoiceDto> list(
-            @RequestParam(name = "tenantId", required = false) Long tenantId,
-            @RequestParam(name = "q", required = false) String q
-    ) {
-        return invoiceService.list(tenantId, q);
+    public List<InvoiceDto> list(@RequestParam(name = "q", required = false) String q) {
+        return invoiceService.list(null, q);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "세금계산서 상세")
-    public InvoiceDetailDto get(
-            @RequestParam(name = "tenantId", required = false) Long tenantId,
-            @PathVariable Long id
-    ) {
-        return invoiceService.getById(tenantId, id);
+    public InvoiceDetailDto get(@PathVariable Long id) {
+        return invoiceService.getById(null, id);
     }
 
     @PostMapping
     @Operation(summary = "세금계산서 임시저장")
-    public InvoiceDetailDto create(
-            @RequestParam(name = "tenantId", required = false) Long tenantId,
-            @Valid @RequestBody CreateInvoiceRequest body
-    ) {
-        return invoiceService.createDraft(tenantId, body);
+    public InvoiceDetailDto create(@Valid @RequestBody CreateInvoiceRequest body) {
+        return invoiceService.createDraft(null, body);
     }
 }

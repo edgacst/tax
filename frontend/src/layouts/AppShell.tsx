@@ -87,8 +87,7 @@ export function AppShell() {
           <button
             type="button"
             onClick={() => {
-              logout()
-              navigate('/login', { replace: true })
+              void logout().then(() => navigate('/login', { replace: true }))
             }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-rose-950/40 hover:text-rose-200"
           >

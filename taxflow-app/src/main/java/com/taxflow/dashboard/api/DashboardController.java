@@ -19,7 +19,7 @@ public class DashboardController {
 
     @GetMapping("/summary")
     @Operation(summary = "대시보드 요약")
-    public DashboardSummaryDto summary(@RequestParam(name = "tenantId", required = false) Long tenantId) {
-        return dashboardService.summary(tenantId);
+    public DashboardSummaryDto summary() {
+        return dashboardService.summary(null);
     }
 }

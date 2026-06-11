@@ -1,35 +1,64 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { loginApi, logoutApi, refreshApi, type UserProfile } from '../lib/authApi'
 
-export type AuthUser = {
-  email: string
-  name: string
-}
+export type AuthUser = UserProfile
 
 type AuthState = {
   user: AuthUser | null
-  /** 비밀번호는 저장하지 않음. 시연용으로 이메일만으로 로그인 처리 */
-  login: (email: string, _password: string) => void
-  logout: () => void
-}
-
-function deriveName(email: string): string {
-  const local = email.split('@')[0]?.trim()
-  if (!local) return '사용자'
-  return local.charAt(0).toUpperCase() + local.slice(1)
+  accessToken: string | null
+  refreshToken: string | null
+  login: (email: string, password: string) => Promise<void>
+  logout: () => Promise<void>
+  refreshSession: () => Promise<boolean>
+  setSession: (accessToken: string, refreshToken: string, user: AuthUser) => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
-      login: (email, _password) => {
-        void _password
-        const trimmed = email.trim().toLowerCase()
-        set({ user: { email: trimmed, name: deriveName(trimmed) } })
+      accessToken: null,
+      refreshToken: null,
+      setSession: (accessToken, refreshToken, user) =>
+        set({ accessToken, refreshToken, user }),
+      login: async (email, password) => {
+        const res = await loginApi(email, password)
+        set({
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+          user: res.user,
+        })
       },
-      logout: () => set({ user: null }),
+      logout: async () => {
+        const rt = get().refreshToken
+        set({ user: null, accessToken: null, refreshToken: null })
+        await logoutApi(rt)
+      },
+      refreshSession: async () => {
+        const rt = get().refreshToken
+        if (!rt) return false
+        try {
+          const res = await refreshApi(rt)
+          set({
+            accessToken: res.accessToken,
+            refreshToken: res.refreshToken,
+            user: res.user,
+          })
+          return true
+        } catch {
+          set({ user: null, accessToken: null, refreshToken: null })
+          return false
+        }
+      },
     }),
-    { name: 'taxflow-auth' },
+    {
+      name: 'taxflow-auth',
+      partialize: (s) => ({
+        user: s.user,
+        accessToken: s.accessToken,
+        refreshToken: s.refreshToken,
+      }),
+    },
   ),
 )

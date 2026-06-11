@@ -58,8 +58,13 @@ if ($dbUp) {
     }
 }
 
-Write-Host "[...] Backend (8080) in new window..." -ForegroundColor Cyan
-$backendCmd = @"
+if (Test-PortListening 8080) {
+    Write-Host "[WARN] Port 8080 already in use — old backend still running." -ForegroundColor Red
+    Write-Host "       Run:  .\scripts\restart-backend.ps1   (or Ctrl+C in the backend window first)" -ForegroundColor Yellow
+    Write-Host "       New APIs (POST/PUT) will NOT work until you restart the backend." -ForegroundColor Yellow
+} else {
+    Write-Host "[...] Backend (8080) in new window..." -ForegroundColor Cyan
+    $backendCmd = @"
 Set-Location '$root'
 if (Test-Path '.env') {
   Get-Content '.env' -Encoding UTF8 | ForEach-Object {
@@ -68,11 +73,14 @@ if (Test-Path '.env') {
     Set-Item Env:`$(`$_.Substring(0,`$i).Trim()) `$_.Substring(`$i+1).Trim()
   }
 }
+.\gradlew.bat :taxflow-app:classes -q
+if (`$LASTEXITCODE -ne 0) { exit 1 }
 .\gradlew.bat :taxflow-app:bootRun --args='--spring.profiles.active=dev'
 "@
-Start-Process powershell -ArgumentList @("-NoExit", "-Command", $backendCmd)
+    Start-Process powershell -ArgumentList @("-NoExit", "-Command", $backendCmd)
+    Start-Sleep -Seconds 2
+}
 
-Start-Sleep -Seconds 2
 Write-Host "[...] Frontend (5173) in new window..." -ForegroundColor Cyan
 Start-Process powershell -ArgumentList @("-NoExit", "-Command", "Set-Location '$root\frontend'; npm run dev")
 

@@ -1,26 +1,6 @@
 import react from '@vitejs/plugin-react'
 import type { Plugin, PreviewServer, ViteDevServer } from 'vite'
-import { defineConfig } from 'vite'
-
-/** dev(`vite`) / preview(`vite preview`) 둘 다 백엔드(8080)로 넘김 — preview는 server.proxy만으로는 동작하지 않음 */
-const backendProxy = {
-  '/api': {
-    target: 'http://127.0.0.1:8080',
-    changeOrigin: true,
-  },
-  '/v3': {
-    target: 'http://127.0.0.1:8080',
-    changeOrigin: true,
-  },
-  '/swagger-ui': {
-    target: 'http://127.0.0.1:8080',
-    changeOrigin: true,
-  },
-  '/webjars': {
-    target: 'http://127.0.0.1:8080',
-    changeOrigin: true,
-  },
-} satisfies Record<string, { target: string; changeOrigin: boolean }>
+import { defineConfig, loadEnv } from 'vite'
 
 /**
  * `/dlrp` 같은 오타·직접 URL 입력 시에도 React 앱(index.html)이 뜨도록 함.
@@ -69,20 +49,32 @@ function spaFallback(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), spaFallback()],
-  server: {
-    // 127.0.0.1 / LAN 모두에서 접속 가능 (Windows에서 localhost vs 127 차이 완화)
-    host: true,
-    port: 5173,
-    // 5173 사용 중이면 다음 포트로 뜸 — strictPort true 면 즉시 종료되어 "안 뜨는" 것처럼 보일 수 있음
-    strictPort: false,
-    proxy: backendProxy,
-  },
-  preview: {
-    host: true,
-    port: 4173,
-    strictPort: false,
-    proxy: backendProxy,
-  },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const backendPort = env.VITE_BACKEND_PORT || '8080'
+  const backendTarget = `http://127.0.0.1:${backendPort}`
+
+  /** dev(`vite`) / preview(`vite preview`) 둘 다 백엔드로 넘김 */
+  const backendProxy = {
+    '/api': { target: backendTarget, changeOrigin: true },
+    '/v3': { target: backendTarget, changeOrigin: true },
+    '/swagger-ui': { target: backendTarget, changeOrigin: true },
+    '/webjars': { target: backendTarget, changeOrigin: true },
+  }
+
+  return {
+    plugins: [react(), spaFallback()],
+    server: {
+      host: true,
+      port: 5173,
+      strictPort: false,
+      proxy: backendProxy,
+    },
+    preview: {
+      host: true,
+      port: 4173,
+      strictPort: false,
+      proxy: backendProxy,
+    },
+  }
 })

@@ -82,6 +82,9 @@ audit:
   retention-days: 365
 
 taxflow:
+  certificate:
+    master-key-base64: ${TAXFLOW_CERT_MASTER_KEY:}
+    local-storage-dir: data/certificate-vault
   nts:
     biz-verify:
       enabled: ${NTS_BIZ_VERIFY_ENABLED:false}

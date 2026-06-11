@@ -7,6 +7,11 @@ export const mockWorkplaces: Workplace[] = [
     bizNo: '1088123456',
     default: true,
     address: '서울특별시 강남구 테헤란로 123',
+    ceoName: '',
+    bizType: '',
+    bizItem: '',
+    phone: '',
+    email: '',
   },
   {
     id: 'w-2',
@@ -14,5 +19,10 @@ export const mockWorkplaces: Workplace[] = [
     bizNo: '6088123456',
     default: false,
     address: '부산광역시 해운대구 센텀중앙로 45',
+    ceoName: '',
+    bizType: '',
+    bizItem: '',
+    phone: '',
+    email: '',
   },
 ]

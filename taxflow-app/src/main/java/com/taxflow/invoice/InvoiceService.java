@@ -1,5 +1,7 @@
 package com.taxflow.invoice;
 
+import com.taxflow.audit.AuditLog;
+import com.taxflow.audit.AuditService;
 import com.taxflow.invoice.api.*;
 import com.taxflow.tenant.Tenant;
 import com.taxflow.tenant.TenantAccess;
@@ -19,6 +21,7 @@ import java.util.Locale;
 public class InvoiceService {
 
     private final TenantAccess tenantAccess;
+    private final AuditService auditService;
 
     private static final RowMapper<InvoiceDto> LIST_MAPPER = (rs, rowNum) -> new InvoiceDto(
             rs.getLong("id"),
@@ -172,7 +175,8 @@ public class InvoiceService {
                     itemTax
             );
         }
-        return getById(tenant.getId(), invoiceId);
+        auditService.log(AuditLog.INVOICE_CREATED, "invoice", invoiceId);
+        return getById(null, invoiceId);
     }
 
     private void assertExists(String schema, String table, Long id) {

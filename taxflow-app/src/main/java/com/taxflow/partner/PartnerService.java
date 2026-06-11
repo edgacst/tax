@@ -1,5 +1,7 @@
 package com.taxflow.partner;
 
+import com.taxflow.audit.AuditLog;
+import com.taxflow.audit.AuditService;
 import com.taxflow.partner.api.CreatePartnerRequest;
 import com.taxflow.partner.api.PartnerDto;
 import com.taxflow.tenant.Tenant;
@@ -18,6 +20,7 @@ import java.util.List;
 public class PartnerService {
 
     private final TenantAccess tenantAccess;
+    private final AuditService auditService;
 
     private static final RowMapper<PartnerDto> ROW_MAPPER = (rs, rowNum) -> new PartnerDto(
             rs.getLong("id"),
@@ -82,6 +85,7 @@ public class PartnerService {
                 req.phone(),
                 req.favorite()
         );
+        auditService.log(AuditLog.PARTNER_CREATED, "partner", id);
         return list(tenant.getId(), null).stream()
                 .filter(p -> p.id().equals(id))
                 .findFirst()

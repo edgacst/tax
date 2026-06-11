@@ -10,6 +10,7 @@ import { PartnerListPage } from './pages/partners/PartnerListPage'
 import { PartnerNewPage } from './pages/partners/PartnerNewPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
 import { BizVerifyPage } from './pages/tools/BizVerifyPage'
+import { WorkplaceFormPage } from './pages/workplaces/WorkplaceFormPage'
 import { WorkplaceListPage } from './pages/workplaces/WorkplaceListPage'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 
@@ -27,6 +28,8 @@ export default function App() {
             <Route path="partners" element={<PartnerListPage />} />
             <Route path="partners/new" element={<PartnerNewPage />} />
             <Route path="workplaces" element={<WorkplaceListPage />} />
+            <Route path="workplaces/new" element={<WorkplaceFormPage />} />
+            <Route path="workplaces/:id/edit" element={<WorkplaceFormPage />} />
             <Route path="certificates" element={<CertificateListPage />} />
             <Route path="tools/biz-verify" element={<BizVerifyPage />} />
             <Route path="settings" element={<SettingsPage />} />

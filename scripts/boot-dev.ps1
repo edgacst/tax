@@ -23,5 +23,16 @@ if (Test-Path "$root\.env") {
     }
 }
 
+$port8080 = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue
+if ($port8080) {
+    Write-Host "[WARN] Port 8080 is already in use. Stop the old backend (Ctrl+C in its window) then run this script again." -ForegroundColor Red
+    Write-Host "       New API (POST/PUT) will not work until you restart." -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "[...] Starting backend only (8080). For the web UI use:  .\scripts\start-dev.ps1" -ForegroundColor Yellow
+Write-Host "[...] Compiling latest backend ..." -ForegroundColor Cyan
+.\gradlew.bat :taxflow-app:classes -q
+if ($LASTEXITCODE -ne 0) { exit 1 }
 Write-Host "[...] Starting backend (Flyway migrations run on first boot) ..." -ForegroundColor Cyan
 .\gradlew.bat :taxflow-app:bootRun --args="--spring.profiles.active=dev"
