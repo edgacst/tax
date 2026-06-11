@@ -1,0 +1,66 @@
+name: 버그 리포트
+description: 오류·예상과 다른 동작 신고
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        재현 가능한 버그를 알려주세요. 스크린샷·로그가 있으면 해결에 도움이 됩니다.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 영역
+      options:
+        - 인증 / 로그인
+        - 공인인증서
+        - 세금계산서
+        - 국세청 연계
+        - 사업장 / 거래처
+        - 프론트엔드 UI
+        - DB / 마이그레이션
+        - 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 단계
+      placeholder: |
+        1. demo@taxflow.kr 로 로그인
+        2. 세금계산서 상세 → 국세청 발행 클릭
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 동작
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: 환경
+      placeholder: "Windows 11, Postgres 18, 브랜치 main @ 커밋 abc1234"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 로그 / 스크린샷
+      render: shell
+    validations:
+      required: false

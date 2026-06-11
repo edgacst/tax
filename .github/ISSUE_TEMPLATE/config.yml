@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 로드맵 (기획서)
+    url: https://github.com/edgacst/tax/blob/main/docs/taxflow-product-spec.md
+    about: Phase별 상세 기능 목록
+  - name: 로컬 실행 가이드
+    url: https://github.com/edgacst/tax/blob/main/README.md#빠른-시작-windows
+    about: README 빠른 시작

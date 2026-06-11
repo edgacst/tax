@@ -1,0 +1,44 @@
+name: 기능 요청
+description: 새 기능·개선 제안
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TaxFlow 로드맵 Phase와 맞는 작업이면 마일스톤을 이슈 생성 후 지정해 주세요.
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: 관련 Phase
+      options:
+        - Phase 3 — 국세청 실연동
+        - Phase 4 — 출력 & 연동
+        - Phase 5 — 멀티테넌트 관리
+        - Phase 6 — 보안 & CI/CD
+        - 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 문제 / 배경
+      description: 어떤 상황에서 필요한지
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 제안하는 해결 방법
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 대안 (선택)
+    validations:
+      required: false
