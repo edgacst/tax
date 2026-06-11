@@ -14,6 +14,8 @@ type InvoiceDto = {
   status: string
   direction: string
   remark?: string | null
+  approvalNumber?: string | null
+  submittedAt?: string | null
 }
 
 export type InvoiceItemDto = {
@@ -83,4 +85,17 @@ export async function createInvoiceDraft(body: CreateInvoiceBody, tenantId?: num
       items: body.items,
     }),
   })
+}
+
+export type InvoiceSubmitResponse = {
+  invoice: InvoiceDetailDto
+  approvalNumber: string
+  submissionMode: string
+  message: string
+}
+
+export async function submitInvoice(id: string, tenantId?: number): Promise<InvoiceSubmitResponse> {
+  const base = `/api/v1/invoices/${encodeURIComponent(id)}/submit`
+  const qs = tenantId != null ? `?tenantId=${tenantId}` : ''
+  return fetchJson<InvoiceSubmitResponse>(`${base}${qs}`, { method: 'POST' })
 }

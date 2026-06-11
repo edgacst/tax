@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { InvoiceStatusBadge } from '../../components/StatusBadge'
 import { won } from '../../lib/format'
-import { getInvoice, type InvoiceDetailDto } from '../../lib/invoicesApi'
+import { getInvoice, submitInvoice, type InvoiceDetailDto } from '../../lib/invoicesApi'
 import type { InvoiceStatus } from '../../types/domain'
 
 export function InvoiceDetailPage() {
@@ -11,6 +11,8 @@ export function InvoiceDetailPage() {
   const [row, setRow] = useState<InvoiceDetailDto | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -38,6 +40,22 @@ export function InvoiceDetailPage() {
 
   if (!row) {
     return <p className="text-sm text-slate-500">불러오는 중…</p>
+  }
+
+  const canSubmit = row.status === 'draft' && row.direction === 'issue'
+
+  async function handleSubmit() {
+    if (!id || !canSubmit) return
+    setSubmitting(true)
+    setSubmitError(null)
+    try {
+      const res = await submitInvoice(id)
+      setRow(res.invoice)
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : '국세청 전송에 실패했습니다.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -72,17 +90,35 @@ export function InvoiceDetailPage() {
             <FileDown className="h-4 w-4" />
             PDF
           </button>
-          <button
-            type="button"
-            disabled
-            className="inline-flex items-center gap-2 rounded-xl border border-surface-border px-4 py-2 text-sm text-slate-500"
-            title="추후 구현"
-          >
-            <Send className="h-4 w-4" />
-            재전송
-          </button>
+          {canSubmit && (
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={() => void handleSubmit()}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+              {submitting ? '전송 중…' : '국세청 발행'}
+            </button>
+          )}
         </div>
       </div>
+
+      {submitError && (
+        <p className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
+          {submitError}
+        </p>
+      )}
+
+      {row.approvalNumber && (
+        <section className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6">
+          <h2 className="mb-2 text-sm font-semibold text-emerald-200">국세청 승인</h2>
+          <p className="font-mono text-lg text-white">{row.approvalNumber}</p>
+          {row.submittedAt && (
+            <p className="mt-1 text-xs text-emerald-300/80">전송 시각: {row.submittedAt}</p>
+          )}
+        </section>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-surface-border bg-surface-card p-6">

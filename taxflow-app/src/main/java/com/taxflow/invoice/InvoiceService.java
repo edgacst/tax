@@ -109,10 +109,30 @@ public class InvoiceService {
                 ),
                 invoiceId
         );
+        var meta = tenantAccess.jdbc().query(
+                """
+                        SELECT approval_number, submitted_at
+                        FROM %s.tax_invoices WHERE id = ?
+                        """.formatted(schema),
+                (rs, rowNum) -> new Object[] {
+                        rs.getString("approval_number"),
+                        rs.getTimestamp("submitted_at")
+                },
+                invoiceId
+        );
+        String approvalNumber = null;
+        String submittedAt = null;
+        if (!meta.isEmpty()) {
+            approvalNumber = (String) meta.get(0)[0];
+            java.sql.Timestamp ts = (java.sql.Timestamp) meta.get(0)[1];
+            submittedAt = ts != null ? ts.toInstant().toString() : null;
+        }
+
         return new InvoiceDetailDto(
                 head.id(), head.serialNo(), head.issueDate(), head.workplaceName(),
                 head.partnerName(), head.partnerBizNo(), head.supplyAmount(), head.tax(),
-                head.total(), head.status(), head.direction(), head.remark(), items
+                head.total(), head.status(), head.direction(), head.remark(),
+                approvalNumber, submittedAt, items
         );
     }
 

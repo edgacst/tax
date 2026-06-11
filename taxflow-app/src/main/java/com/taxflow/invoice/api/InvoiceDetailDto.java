@@ -15,6 +15,8 @@ public record InvoiceDetailDto(
         String status,
         String direction,
         String remark,
+        String approvalNumber,
+        String submittedAt,
         List<InvoiceItemDto> items
 ) {
 }

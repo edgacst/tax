@@ -90,6 +90,9 @@ taxflow:
       enabled: ${NTS_BIZ_VERIFY_ENABLED:false}
       service-key: ${NTS_BIZ_VERIFY_SERVICE_KEY:}
       base-url: https://api.odcloud.kr/api/nts-businessman/v1
+    submission:
+      mode: ${NTS_SUBMISSION_MODE:stub}
+      soap-endpoint: ${NTS_SUBMISSION_SOAP_ENDPOINT:}
 
 management:
   endpoints:
